@@ -1,0 +1,186 @@
+<html>
+    <head>
+        <title>Schelling Segregation Model</title>
+        <script src="https://d3js.org/d3.v6.min.js"></script>
+        <script>
+            // Adapted from http://www.natureincode.com/code/various/schelling.html
+            var grid_length = 75;
+            var grid = [];
+            var temp_grid = [];
+            var empty = 0.05;
+            var min_pref_similar = 0.3
+            var moves_per_update = 0;
+
+            function get_random_int(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+
+            function draw_grid(data,colors) {
+                var width = 600;
+                var height = 600;
+                var grid_length = data.length;
+
+                var svg = d3.select('body').append('svg')
+                    .attr('width', width)
+                    .attr('height', height);
+
+                var rw = Math.floor(width/grid_length);
+                var rh = Math.floor(height/grid_length);
+
+                var g = svg.selectAll('g')
+                        .data(data)
+                        .enter()
+                        .append('g')
+                        .attr('transform', function (d, i) {
+                        return 'translate(0, ' + (width/grid_length) * i + ')';
+                        });
+
+                g.selectAll('rect')
+                        .data(function (d) {
+                        return d;
+                        })
+                        .enter()
+                        .append('rect')
+                        .attr('x', function (d, i) {
+                        return (width/grid_length) * i;
+                        })
+                        .attr('width', rw)
+                        .attr('height', rh)
+                        .attr('class',function(d) {
+                        return d;
+                        });
+                if (!colors) {
+                    d3.selectAll(".A1A1").style("fill","#fff");
+                    d3.selectAll(".A1A2").style("fill","#2176c9");
+                    d3.selectAll(".A2A2").style("fill","#042029");
+                }
+                else {
+                    for (var i = 0; i < colors.length; i = i + 2) {
+                        d3.selectAll("."+colors[i]).style("fill",colors[i+1]);	
+                    }
+                }
+            }
+
+            function update_grid(data,colors){
+                var grid_length = data.length;
+                d3.select('svg').selectAll('g')
+                    .data(data)
+                    .selectAll('rect')
+                    .data(function (d) {
+                    return d;
+                    })
+                    .attr('class',function(d) {
+                    return d;
+                    });
+                if (!colors) {
+                    d3.selectAll(".A1A1").style("fill","#fff");
+                    d3.selectAll(".A1A2").style("fill","#2176c9");
+                    d3.selectAll(".A2A2").style("fill","#042029");
+                }
+                else {
+                    for (var i = 0; i < colors.length; i = i + 2) {
+                        d3.selectAll("."+colors[i]).style("fill",colors[i+1]);	
+                    }
+                }
+            }
+
+            function init_grid() {
+                for (var i = 0; i < grid_length; i = i + 1) {
+                    grid[i] = [];
+                    for (var ii = 0; ii < grid_length; ii = ii + 1) {
+                        if (Math.random() < empty) {
+                            grid[i][ii] = "E";
+                        }
+                        else {
+                            if (Math.random() < 0.5) {
+                                grid[i][ii] = "A";	
+                            }
+                            else {
+                                grid[i][ii] = "B";
+                            }
+                        }
+                    }
+                }
+            }
+
+            init_grid();
+
+            draw_grid(grid,["E","#ffffff","A","#F4D23E","B","#1167BD"]);
+
+            function simulate_and_visualize() {
+                var updates = grid_length * grid_length;
+                moves_per_update = 0;
+                for (var i = 0; i < updates; i++) {
+                    run_time_step();
+                }
+                update_grid(grid,["E","#ffffff","A","#F4D23E","B","#1167BD"]);
+                if (moves_per_update == 0) {
+                    clearInterval(interval_id)		
+                }
+            }
+
+            var interval_id = setInterval(simulate_and_visualize, 100);
+
+            function run_time_step() {
+                var random_i;
+                var random_ii;
+                do {
+                    random_i = get_random_int(0,grid_length-1);
+                    random_ii = get_random_int(0,grid_length-1)
+                } while (grid[random_i][random_ii] === "E");
+                var current_type = grid[random_i][random_ii];
+                var move = make_decision(random_i, random_ii);
+                if (move) {
+                    // set current cell to empty
+                    grid[random_i][random_ii] = "E";
+                    // get random empty cell
+                    do {
+                        random_i = get_random_int(0,grid_length-1);
+                        random_ii = get_random_int(0,grid_length-1)
+                    } while (grid[random_i][random_ii] !== "E");
+                    // and populate with current type
+                    grid[random_i][random_ii] = current_type;
+                    moves_per_update++;
+                }
+            }
+
+            function make_decision(i, ii) {
+                var current_type = grid[i][ii];
+                var type_a = 0;
+                var type_b = 0;
+                for (var n_i = i-1; n_i <= i+1; n_i = n_i + 1) {
+                    for (var n_ii = ii-1; n_ii <= ii+1; n_ii = n_ii + 1) {
+                        if (n_i == i && n_ii == ii) {
+                            continue;
+                        }
+                        if (grid[get_bounded_index(n_i)][get_bounded_index(n_ii)] === "A") {
+                            type_a++;
+                        }
+                        if (grid[get_bounded_index(n_i)][get_bounded_index(n_ii)] === "B") {
+                            type_b++;
+                        }
+                    }
+                }
+                var fraction_a = type_a / (type_a + type_b);
+                var fraction_b = type_b / (type_a + type_b);
+                if ((current_type === "A" && fraction_a < min_pref_similar) || (current_type === "B" && fraction_b < min_pref_similar)) {
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+
+            function get_bounded_index(index) {
+                var bounded_index = index;
+                if (index < 0) {
+                    bounded_index = index + grid_length;
+                }
+                if (index >= grid_length) {
+                    bounded_index = index - grid_length;
+                }
+                return bounded_index;
+            }	
+        </script>
+    </head>
+</html>
