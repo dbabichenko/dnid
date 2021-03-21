@@ -1,0 +1,35 @@
+<!--
+Based on https://tobiasahlin.com/blog/chartjs-charts-to-get-you-started
+-->
+<html>
+    <head>
+        <title>Bar Chart Example</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+        
+    </head>
+    <body>
+        <canvas id="myChart"></canvas>
+    </body>
+    <script>
+        new Chart(document.getElementById("myChart"), {
+            type: 'bar',
+            data: {
+            labels: ["Africa", "Asia", "Europe", "Latin America", "North America"],
+            datasets: [
+                {
+                label: "Bar chart example",
+                backgroundColor: ["#3e95cd", "#8e5ea2","#3cba9f","#e8c3b9","#c45850"],
+                data: [2478,5267,734,784,433]
+                }
+            ]
+            },
+            options: {
+            legend: { display: false },
+            title: {
+                display: true,
+                text: 'Bar chart example'
+            }
+            }
+        });
+    </script>
+</html>
