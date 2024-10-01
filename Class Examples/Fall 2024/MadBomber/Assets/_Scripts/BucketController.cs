@@ -15,19 +15,20 @@ public class BucketController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.RightArrow))
+        // Debug.Log(Time.deltaTime);
+        if (Input.GetKey(KeyCode.RightArrow))
         {
             Vector2 newPos = new Vector2(
-                gameObject.transform.position.x + speed,
+                gameObject.transform.position.x + speed * Time.deltaTime,
                 gameObject.transform.position.y
                 );
             gameObject.transform.position = newPos;
         }
 
-        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        if (Input.GetKey(KeyCode.LeftArrow))
         {
             Vector2 newPos = new Vector2(
-                gameObject.transform.position.x - speed,
+                gameObject.transform.position.x - speed * Time.deltaTime,
                 gameObject.transform.position.y
                 );
             gameObject.transform.position = newPos;
